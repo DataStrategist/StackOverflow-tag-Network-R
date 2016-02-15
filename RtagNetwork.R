@@ -48,22 +48,43 @@ g <- f %>% data.frame
 g <- g[g$aaa !=g$vvv,]
 
 ## output a csv so everyone can play :)
-write.csv(g,"rTagsAndLinkStrengths.csv")
+# write.csv(g,"rTagsAndLinkStrengths.csv")
 
 ## Select cutoff
-h <- filter(g,Freq>1)
+h <- filter(g,Freq>3)
 
 ## Investigate Link Strengths
 h$Freq %>% sort %>% plot(main = "Link Strength Distribution", ylab = "Link Strength",
                          xlab="Question Number",ylim = c(1,50))
 
-## Plot relationships! (Simple)
-d3SimpleNetwork(h,fontsize = 15, width = 3,840, height = 2160,
-                linkColour ="#999",file="Simple10.html")
+########### This part removes connections ---------
+
+conns <- h[,c(1,3)]
+names(conns)[1] <- "vvv"
+conns <- rbind(conns,h[,c(2,3)])
+
+conns %>%
+  group_by(vvv) %>%
+  summarize(Sum=sum(Freq)) %>%
+  arrange(desc(Sum)) %>% head(35) %>% 
+  select(vvv) -> toLose
+
+paste(toLose$vvv,collapse = "|") -> toLose
+toLose <- gsub("-","\\\\-",toLose)
+  # toLose <- c("ggplot2|plot|data.frame")
+
+## Lose the above nodes:
+h <- h[-grep(toLose,h$aaa),]
+h <- h[-grep(toLose,h$vvv),]
+############ -------------
+
+d3SimpleNetwork(h,fontsize = 15, width = 1800, height = 900,
+                linkColour ="#999",file="LS3withoutTop35.html")
 
 # ## @ 4k resolution:
-# d3SimpleNetwork(h,fontsize = 15, width = 1800, height = 900,
+# d3SimpleNetwork(h,fontsize = 15, width = 3,840, height = 2160,
 #                 linkColour ="#999",file="Simple1.4k.html")
+
 
 
 ## or Complex ones:
